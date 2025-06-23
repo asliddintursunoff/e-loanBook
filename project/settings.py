@@ -23,10 +23,10 @@ import os
 SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = True
 # DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = ['web-production-1028.up.railway.app', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['web-production-90334.up.railway.app', 'localhost', '127.0.0.1']
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://web-production-1028.up.railway.app'
+    'https://web-production-90334.up.railway.app'
 ]
 
 
