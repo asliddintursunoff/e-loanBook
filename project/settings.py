@@ -23,8 +23,11 @@ import os
 SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-secret')
 DEBUG = True
 # DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = ['.railway.app', 'localhost', '127.0.0.1']
-CSRF_TRUSTED_ORIGINS = ['https://web-production-9b6e.up.railway.app/']
+ALLOWED_HOSTS = ['web-production-9b6e.up.railway.app', 'localhost', '127.0.0.1']
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-9b6e.up.railway.app'
+]
 
 
 
