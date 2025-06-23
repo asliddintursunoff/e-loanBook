@@ -134,3 +134,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 AUTH_USER_MODEL = "app.CustomUser"
+
+STATIC_URL = '/static/'
+
+# This is where static files will be collected
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Optional: add for dev
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
