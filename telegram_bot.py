@@ -3652,31 +3652,21 @@ harajat_conv = ConversationHandler(
     ],
     per_user=True
 )
-
+import asyncio
 from telegram import BotCommand
 async def set_bot_commands(application):
     commands = [
         BotCommand("menu", "Menu"),
         BotCommand("start", "Shaxsiy hisobga kirish"),
         BotCommand("logout", "Hisobdan chiqish"),
-      
-        # Add more commands here
     ]
     await application.bot.set_my_commands(commands)
 
+async def main():
+    app = ApplicationBuilder().token("YOUR_BOT_TOKEN").build()
 
+    await set_bot_commands(app)
 
-
-# Entry pointlar
-
-import asyncio
-# Register handlers
-if __name__ == '__main__':
-    import django, os
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'your_project.settings')
-    django.setup()
-    
-    app.job_queue.run_repeating(check_due_payments, interval=86400, first=0)  # Run every day
     app.add_handler(login_conv)
     app.add_handler(supplier_conv)
     app.add_handler(qarz_conv)
@@ -3687,9 +3677,10 @@ if __name__ == '__main__':
     app.add_handler(xabarlar_conv)
     app.add_handler(CommandHandler("menu", show_menu))
     app.add_handler(CommandHandler("logout", logout))
-    app.job_queue.run_repeating(check_due_payments, interval=86400, first=0)
-    async def main():
-        await set_bot_commands(app)
-        await app.run_polling()
 
+    app.job_queue.run_repeating(check_due_payments, interval=86400, first=0)
+
+    await app.run_polling()
+
+if __name__ == "__main__":
     asyncio.run(main())
