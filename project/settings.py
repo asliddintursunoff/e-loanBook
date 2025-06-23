@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 import os
-SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-secret')
+SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = True
 # DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = ['web-production-9b6e.up.railway.app', 'localhost', '127.0.0.1']
