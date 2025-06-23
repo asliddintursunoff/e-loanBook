@@ -6,12 +6,14 @@ from django.utils import timezone
 import requests
 
 def get_usd_to_uzs_rate():
-    # try:
-    #     response = requests.get("https://cbu.uz/uz/arkhiv-kursov-valyut/json/USD/")
-    #     data = response.json()
-    #     return Decimal(data[0]["Rate"])  # <-- float emas, Decimal
-    # except Exception as e:
-        return Decimal("12500")
+    try:
+        response = requests.get("https://cbu.uz/uz/arkhiv-kursov-valyut/json/USD/")
+        response.raise_for_status()
+        data = response.json()
+        return Decimal(data[0]["Rate"])
+    except Exception as e:
+        print(f"Kurs olishda xatolik: {e}")
+        return Decimal("12500")  # fallback qiymat
 
 
 
@@ -41,7 +43,12 @@ class Taminotchi(models.Model):
             total_payment_uzs += amount
 
         return total_purchase_uzs - total_payment_uzs
+    class Meta:
+        verbose_name = "Yetqazib beruvchi"            
+        verbose_name_plural = "Yetqazib beruvchilar" 
 
+    def __str__(self):
+        return f"{self.id} - Yetqazib beruvchi - {self.taminotchi_ismi} - {self.taminotchi_telefon_raqami}"
 class Pul_olish(models.Model):
     status_choice2 = [
         ("tolangan","To'langan"),
@@ -55,6 +62,11 @@ class Pul_olish(models.Model):
     tolangan = models.DecimalField(max_digits=30,default=0,decimal_places=2)
     status = models.CharField(max_length=25,choices=status_choice2,default="tolanmagan")
     currency = models.CharField(max_length=3, choices=[("UZS", "UZS"), ("USD", "USD")], default="UZS")
+
+    class Meta:
+        verbose_name = "Qarz olish"            
+        verbose_name_plural = "Qarz olish"  
+
     def __str__(self):
         return f"{self.taminotchi} - {self.umumiy_miqdor}"
     
@@ -71,7 +83,9 @@ class Pul_berish(models.Model):
 
     def __str__(self):
         return f"{self.taminotchi} - olingan:{self.pul_olingan} -  berildi:{self.summa} sana: {self.sana}"
-
+    class Meta:
+        verbose_name = "Qarz to'lash"            
+        verbose_name_plural = "Qarz to'lash" 
     
 class CustomUser(AbstractUser):
     telegram_chat_id = models.CharField(max_length=50, blank=True, null=True)
@@ -83,16 +97,27 @@ class CustomUser(AbstractUser):
     can_change_expanse = models.BooleanField(default=False)
     can_show_harajatlar = models.BooleanField(default=False)
     
+    class Meta:
+        verbose_name = "Foydalanuvchi"            
+        verbose_name_plural = "Foydalanuvchilar" 
 
     def calculating_users_expanse(self):
         total_expanse = self.expanses.aggregate(models.Sum("summa"))["summa__sum"] or 0
         return total_expanse
     
-
+    def __str__(self):
+        return f"{self.id} - Foydalanuvchi- {self.telegram_bot_login}"
 
 class Harajatlar(models.Model):
     ishchi = models.ForeignKey(CustomUser,on_delete=models.CASCADE,null=True,blank=True,related_name = "expanses")
     sabab = models.CharField(max_length=300,null=True,blank=True)
     summa = models.DecimalField(decimal_places=2,max_digits=30)
     sana = models.DateField()
+
+    class Meta:
+        verbose_name = "Harajat"            
+        verbose_name_plural = "Harajatlar" 
+
+    def __str__(self):
+        return f"{self.id} - Ishchi: {self.ishchi} - summa: {self.summa} - sabab: {self.sabab}"
 
