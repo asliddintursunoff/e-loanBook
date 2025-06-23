@@ -1,8 +1,2 @@
-# Runs only once during deployment
-release: python manage.py makemigrations && python manage.py migrate && python manage.py collectstatic --noinput
-
-# Main web server
-web: gunicorn project.wsgi:application --log-file -
-
-# Background Telegram bot process
+web: python manage.py makemigrations && python manage.py migrate && python manage.py create_superuser && gunicorn project.wsgi && python manage.py collectstatic
 worker: python telegram_bot.py
