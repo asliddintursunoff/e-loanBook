@@ -2117,6 +2117,8 @@ async def payment_confirm_handler(update, context):
             if today>=input_date:
                 if  all_debts:
                     for qarz in all_debts:
+                        if qarz.currency != currency:
+                            continue
                         qarz_qoldiq = qarz.umumiy_miqdor - qarz.tolangan  # both Decimal
                         if qarz_qoldiq > 0:
                             if qoldiq <= qarz_qoldiq:
