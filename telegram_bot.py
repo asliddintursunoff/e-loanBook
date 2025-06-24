@@ -1779,7 +1779,7 @@ async def confirmation_handler(update, context):
         currency = context.user_data.get('currency')
 
         try:
-            
+            exists = await sync_to_async(Pul_olish.objects.filter(taminotchi=supplier).exists)()
             umumiy_qarz = await sync_to_async(supplier.umumiy_qarz)()
             miqdor = Decimal(str(miqdor))  # Har doim Decimal!
             if umumiy_qarz < 0:
@@ -1806,17 +1806,17 @@ async def confirmation_handler(update, context):
                 b = await sync_to_async(Pul_olish.objects.create)(
                 taminotchi=supplier, sabab=reason, sana=sana, umumiy_miqdor=miqdor,currency=currency
                 )
-            new1 = sync_to_async(Pul_olish.objects.filter)(taminotchi = supplier)
-            if new1 is None:
-                sync_to_async(Pul_olish.objects.create)(
-                    taminotchi = supplier,
-                    summa = 0,
-                    sana = sana,
-                    notification_sent = True,
-                    berildi = True,
-                    currency = currency,
-                    pul_olingan = b
-                    )
+            
+            if not exists:
+                await sync_to_async(Pul_berish.objects.create)(
+                    taminotchi=supplier,
+                    summa=0,
+                    sana=sana,
+                    notification_sent=True,
+                    berildi=True,
+                    currency=currency,
+                    pul_olingan=b
+                )
             await query.message.reply_text("Qarz ma’lumoti saqlandi!", reply_markup=nav_keyboard())
             context.user_data['current_state'] = None
             await show_menu(update, context)
