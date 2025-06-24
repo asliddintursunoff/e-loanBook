@@ -2119,47 +2119,52 @@ async def payment_confirm_handler(update, context):
                     for qarz in all_debts:
                         if qarz.currency != currency:
                             continue
-                        qarz_qoldiq = qarz.umumiy_miqdor - qarz.tolangan  # both Decimal
-                        if qarz_qoldiq > 0:
-                            if qoldiq <= qarz_qoldiq:
-                                await sync_to_async(Pul_berish.objects.create)(
-                                    taminotchi=supplier,
-                                    pul_olingan=qarz,
-                                    sana=input_date,
-                                    summa=qoldiq,
-                                    berildi = True,
-                                    currency = currency
-                                )
-                                qarz.tolangan += qoldiq
-                                await sync_to_async(qarz.save)()
-                                qoldiq = Decimal('0')
-                            else:
-                                await sync_to_async(Pul_berish.objects.create)(
-                                    taminotchi=supplier,
-                                    pul_olingan=qarz,
-                                    sana=input_date,
-                                    summa=qarz_qoldiq,
-                                     berildi = True,
-                                     currency = currency
-                                )
-                                qarz.tolangan += qarz_qoldiq
-                                await sync_to_async(qarz.save)()
-                                qoldiq -= qarz_qoldiq
-                            if qoldiq <= 0:
-                                break
-                            if qarz.umumiy_miqdor == qarz.tolangan:
-                                qarz.status = 'tolangan'
-                                await sync_to_async(qarz.save)()
-                        else:
+
+                        qarz_qoldiq = qarz.umumiy_miqdor - qarz.tolangan
+
+                        if qarz_qoldiq <= 0:
+                            continue
+
+                        if qoldiq <= qarz_qoldiq:
                             await sync_to_async(Pul_berish.objects.create)(
+                                taminotchi=supplier,
+                                pul_olingan=qarz,
+                                sana=input_date,
+                                summa=qoldiq,
+                                berildi=True,
+                                currency=currency
+                            )
+                            qarz.tolangan += qoldiq
+                            if qarz.tolangan == qarz.umumiy_miqdor:
+                                qarz.status = 'tolangan'
+                            await sync_to_async(qarz.save)()
+                            qoldiq = Decimal('0')
+                            break  # break here, as qoldiq is finished
+                        else:
+                            # qoldiq katta, qarzni to‘liq yopamiz va qoldiqni kamaytiramiz
+                            await sync_to_async(Pul_berish.objects.create)(
+                                taminotchi=supplier,
+                                pul_olingan=qarz,
+                                sana=input_date,
+                                summa=qarz_qoldiq,
+                                berildi=True,
+                                currency=currency
+                            )
+                            qarz.tolangan += qarz_qoldiq
+                            qarz.status = 'tolangan'
+                            await sync_to_async(qarz.save)()
+                            qoldiq -= qarz_qoldiq
+
+                    # loopdan chiqqandan keyin qoldiq qolgan bo‘lsa, umumiy pul berish yozamiz
+                    if qoldiq > 0:
+                        await sync_to_async(Pul_berish.objects.create)(
                             taminotchi=supplier,
-                            
                             sana=input_date,
                             summa=qoldiq,
-                            berildi = True,
-                            currency = currency
-
+                            berildi=True,
+                            currency=currency
                         )
+
                 else:
                         # Qarzi yopilgan bo‘lsa ham, yangi to‘lov yozishni istasangiz:
                         await sync_to_async(Pul_berish.objects.create)(
