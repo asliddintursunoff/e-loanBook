@@ -62,7 +62,7 @@ class Pul_olish(models.Model):
     tolangan = models.DecimalField(max_digits=30,default=0,decimal_places=2)
     status = models.CharField(max_length=25,choices=status_choice2,default="tolanmagan")
     currency = models.CharField(max_length=3, choices=[("UZS", "UZS"), ("USD", "USD")], default="UZS")
-    dollar_amount = models.FloatField(default=0)
+    dollar_amount = models.DecimalField(max_digits=30,decimal_places=2,default=0)
 
     class Meta:
         verbose_name = "Qarz olish"            
@@ -81,7 +81,7 @@ class Pul_berish(models.Model):
     notification_sent = models.BooleanField(default=False)
     berildi = models.BooleanField(default=False)
     currency = models.CharField(max_length=3, choices=[("UZS", "UZS"), ("USD", "USD")], default="UZS")
-    dollar_amount2 = models.FloatField(default=0)
+    dollar_amount2 = models.DecimalField(max_digits=30,decimal_places=2,default=0)
     def __str__(self):
         return f"{self.taminotchi} - olingan:{self.pul_olingan} -  berildi:{self.summa} sana: {self.sana}"
     class Meta:
