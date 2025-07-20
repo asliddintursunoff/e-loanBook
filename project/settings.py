@@ -80,10 +80,12 @@ WSGI_APPLICATION = 'project.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 import os
 import dj_database_url
+import dotenv
+dotenv.load_dotenv()
 
 DATABASES = {
     "default": dj_database_url.config(
-        default="sqlite:///db.sqlite3",  # fallback for local dev
+    
         conn_max_age=600,
         conn_health_checks=True,
     )
