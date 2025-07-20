@@ -46,6 +46,7 @@ SUPPLIER_PHONE = 22
 FIND_SUPPLIER = 23
 SUPPLIER_ACTION = 24
 ASK_AMOUNT = 25
+
 ASK_DATE = 26
 ASK_REASON = 27
 CONFIRMATION = 28
@@ -66,7 +67,8 @@ EXCEL_DATE_END = 42
 REPORT_MENU = 50
 REPORT_DATE_START = 51
 REPORT_DATE_END = 52
-
+DOLLAR_KURS1 = 53
+DOLLAR_KURS2 = 52
 # --- Rejalashtirilgan Tolovlar / Xabarlar ---
 REJALA_SUPPLIER_LIST = 1000
 REJALA_PAYMENT_LIST = 1001
@@ -1696,15 +1698,32 @@ async def ask_currency(update, context):
 
     if currency == "currency_sum":
         context.user_data['currency'] = "UZS"
+        await query.message.reply_text("Olingan summani kiriting:", reply_markup=nav_keyboard())
+        context.user_data['current_state'] = ASK_AMOUNT
+        return ASK_AMOUNT
     elif currency == "currency_usd":
         context.user_data['currency'] = "USD"
+        await query.message.reply_text("Hozirgi dollar kurs miqdorini kiriting: ", reply_markup=nav_keyboard())
+        context.user_data['current_state'] = DOLLAR_KURS1
+        return DOLLAR_KURS1
     else:
         await query.message.reply_text("Noto‘g‘ri tanlov. Qayta urinib ko‘ring.")
         return PAYMENT_CURRENCY
 
-    await query.message.reply_text("Olingan summani kiriting:", reply_markup=nav_keyboard())
-    context.user_data['current_state'] = ASK_AMOUNT
-    return ASK_AMOUNT
+    
+async def ask_currency_amount(update,context):
+    try:
+        currency_amount = float(update.message.text.replace(",", "."))
+        if currency_amount <= 0:
+            await update.message.reply_text("Miqdor musbat bo‘lishi kerak. Qaytadan kiriting:", reply_markup=nav_keyboard())
+            return DOLLAR_KURS1
+        context.user_data["dollar_kurs"] = currency_amount
+        await update.message.reply_text("Olingan summani kiriting:", reply_markup=nav_keyboard())
+        context.user_data['current_state'] = ASK_AMOUNT
+        return ASK_AMOUNT
+    except ValueError:
+        await update.message.reply_text("Noto‘g‘ri miqdor. Qaytadan kiriting:", reply_markup=nav_keyboard())
+        return DOLLAR_KURS1
 async def ask_amount(update, context):
     try:
         amount = float(update.message.text.replace(",", "."))
@@ -1742,11 +1761,12 @@ async def ask_reason(update, context):
         await show_menu(update, context)
         return ConversationHandler.END
     miqdor = context.user_data.get("qarz_miqdori")
+    currency = context.user_data.get("currency")
     sana = context.user_data.get("qarz_sanasi")
     text = (
         "Kiritilgan ma’lumotlar:\n"
         f"Taminotchi: {supplier.taminotchi_ismi}\n"
-        f"Qarz miqdori: {miqdor}\n"
+        f"Qarz miqdori: {miqdor} {currency}\n"
         f"Sana: {sana}\n"
         f"Sabab: {reason or '-'}\n"
         "Ma’lumotlar to‘g‘rimi?"
@@ -1777,7 +1797,7 @@ async def confirmation_handler(update, context):
         sana = datetime.strptime(sana, "%d-%m-%Y").date()
         reason = context.user_data.get('qarz_sababi')
         currency = context.user_data.get('currency')
-
+        dollar_kurs = context.user_data.get("dollar_kurs")
         try:
             exists = await sync_to_async(Pul_olish.objects.filter(taminotchi=supplier).exists)()
             umumiy_qarz = await sync_to_async(supplier.umumiy_qarz)()
@@ -1798,13 +1818,14 @@ async def confirmation_handler(update, context):
                     umumiy_miqdor=miqdor,
                     tolangan=qoldiq,
                     status = status,
-                    currency=currency
+                    currency=currency,
+                     dollar_amount=dollar_kurs
                 )
 
                 
             else:
                 b = await sync_to_async(Pul_olish.objects.create)(
-                taminotchi=supplier, sabab=reason, sana=sana, umumiy_miqdor=miqdor,currency=currency
+                taminotchi=supplier, sabab=reason, sana=sana, umumiy_miqdor=miqdor,currency=currency,dollar_amount=dollar_kurs
                 )
             
             if not exists:
@@ -1815,7 +1836,8 @@ async def confirmation_handler(update, context):
                     notification_sent=True,
                     berildi=True,
                     currency=currency,
-                    pul_olingan=b
+                    pul_olingan=b,
+                    
                 )
             await query.message.reply_text("Qarz ma’lumoti saqlandi!", reply_markup=nav_keyboard())
             context.user_data['current_state'] = None
@@ -2026,16 +2048,33 @@ async def ask_payment_currency(update, context):
 
     if currency == "currency_sum":
         context.user_data['currency'] = "UZS"
+        await query.message.reply_text("To‘lanadigan summani kiriting:", reply_markup=nav_keyboard())
+        context.user_data['current_state'] = ASK_PAYMENT_AMOUNT
+        return ASK_PAYMENT_AMOUNT
     elif currency == "currency_usd":
         context.user_data['currency'] = "USD"
+        await query.message.reply_text("Hozirgi dollar kurs miqdorini kiriting:", reply_markup=nav_keyboard())
+        context.user_data['current_state'] = DOLLAR_KURS2
+        return DOLLAR_KURS2
     else:
         await query.message.reply_text("Noto‘g‘ri tanlov. Qayta urinib ko‘ring.")
         return ASK_PAYMENT_CURRENCY
 
-    await query.message.reply_text("To‘lanadigan summani kiriting:", reply_markup=nav_keyboard())
-    context.user_data['current_state'] = ASK_PAYMENT_AMOUNT
-    return ASK_PAYMENT_AMOUNT
+    
 
+async def ask_currency_amount2(update,context):
+    try:
+        currency_amount = float(update.message.text.replace(",", "."))
+        if currency_amount <= 0:
+            await update.message.reply_text("Miqdor musbat bo‘lishi kerak. Qaytadan kiriting:", reply_markup=nav_keyboard())
+            return DOLLAR_KURS2
+        context.user_data["dollar_kurs"] = currency_amount
+        await update.message.reply_text("To‘lanadigan summani kiriting:", reply_markup=nav_keyboard())
+        context.user_data['current_state'] = ASK_PAYMENT_AMOUNT
+        return ASK_PAYMENT_AMOUNT
+    except ValueError:
+        await update.message.reply_text("Noto‘g‘ri miqdor. Qaytadan kiriting:", reply_markup=nav_keyboard())
+        return DOLLAR_KURS2
 async def ask_payment_amount(update, context):
     try:
         amount = float(update.message.text.replace(",", "."))
@@ -2063,10 +2102,11 @@ async def ask_payment_date(update, context):
             return ConversationHandler.END
         miqdor = context.user_data.get("tolov_miqdori")
         sana = context.user_data.get("tolov_sanasi")
+        currency = context.user_data.get("currency")
         text = (
             f"To‘lov ma’lumotlari:\n"
             f"Taminotchi: {supplier.taminotchi_ismi}\n"
-            f"Summa: {miqdor}\n"
+            f"Summa: {miqdor} {currency}\n"
             f"Sana: {sana}\n"
             "Ma’lumotlar to‘g‘rimi?"
         )
@@ -2105,7 +2145,7 @@ async def payment_confirm_handler(update, context):
         amount = context.user_data.get("tolov_miqdori")
         sana = context.user_data.get("tolov_sanasi")
         currency = context.user_data.get('currency')
-
+        dollar_kurs = context.user_data.get('dollar_kurs')
         try:
             # always convert amount to Decimal
             qoldiq = Decimal(str(amount))
@@ -2132,7 +2172,8 @@ async def payment_confirm_handler(update, context):
                                 sana=input_date,
                                 summa=qoldiq,
                                 berildi=True,
-                                currency=currency
+                                currency=currency,
+                                dollar_amount2 = dollar_kurs
                             )
                             qarz.tolangan += qoldiq
                             if qarz.tolangan == qarz.umumiy_miqdor:
@@ -2148,7 +2189,8 @@ async def payment_confirm_handler(update, context):
                                 sana=input_date,
                                 summa=qarz_qoldiq,
                                 berildi=True,
-                                currency=currency
+                                currency=currency,
+                                dollar_amount2 = dollar_kurs
                             )
                             qarz.tolangan += qarz_qoldiq
                             qarz.status = 'tolangan'
@@ -2162,7 +2204,8 @@ async def payment_confirm_handler(update, context):
                             sana=input_date,
                             summa=qoldiq,
                             berildi=True,
-                            currency=currency
+                            currency=currency,
+                            dollar_amount2 = dollar_kurs
                         )
 
                 else:
@@ -2173,7 +2216,8 @@ async def payment_confirm_handler(update, context):
                             sana=input_date,
                             summa=qoldiq,
                             berildi = True,
-                            currency = currency
+                            currency = currency,
+                            dollar_amount2 = dollar_kurs
                         )
             else:
                 await sync_to_async(Pul_berish.objects.create)(
@@ -2181,7 +2225,8 @@ async def payment_confirm_handler(update, context):
                             
                             sana=input_date,
                             summa=qoldiq,
-                            currency = currency
+                            currency = currency,
+                            dollar_amount2 = dollar_kurs
                         )
             # Qarzdorlikni hisoblash uchun metod/propertiyani sync-to-async orqali chaqirish
             umumiy_qarz = await sync_to_async(supplier.umumiy_qarz)()
@@ -3447,6 +3492,15 @@ qarz_conv = ConversationHandler(
             CallbackQueryHandler(ask_currency, pattern="^(currency_sum|currency_usd)$"),
             CallbackQueryHandler(navigation_callback, pattern="^(btn_back|btn_menu)$"),
         ],
+        DOLLAR_KURS1: [
+            MessageHandler(filters.TEXT & ~filters.COMMAND, ask_currency_amount),
+            CallbackQueryHandler(navigation_callback, pattern="^(btn_back|btn_menu)$")
+        ],
+        DOLLAR_KURS2: [
+            MessageHandler(filters.TEXT & ~filters.COMMAND, ask_currency_amount2),
+            CallbackQueryHandler(navigation_callback, pattern="^(btn_back|btn_menu)$")
+        ],
+
         ASK_AMOUNT: [
             MessageHandler(filters.TEXT & ~filters.COMMAND, ask_amount),
             CallbackQueryHandler(navigation_callback, pattern="^(btn_back|btn_menu)$")
